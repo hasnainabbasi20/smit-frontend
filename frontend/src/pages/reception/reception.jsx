@@ -1,20 +1,30 @@
-import { useState } from "react";
-import {  useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 const Reception = () => {
+  const navigate = useNavigate(); // React Router's navigation function
   const generateToken = () => Math.floor(1000 + Math.random() * 9000);
-  const [results , setResults] = useState('')
+  const [results, setResults] = useState("");
   const [formData, setFormData] = useState({
     cnic: "",
     name: "",
     phone: "",
     address: "",
     purpose: "",
-    tokenNo :  generateToken()
+    tokenNo: generateToken(),
   });
-   
-  const navigate = useNavigate()
+
+  // Redirect to another page after the token is displayed
+  useEffect(() => {
+    if (results && results.user?.tokenNo) {
+      const timer = setTimeout(() => {
+        navigate("/departmentStaff"); // Replace with your target URL
+      }, 3000); // Redirect after 3 seconds
+
+      return () => clearTimeout(timer); // Cleanup timer on unmount
+    }
+  }, [results, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,9 +32,9 @@ const Reception = () => {
     // Generate a new token before submitting
     const newToken = generateToken();
     setFormData((prev) => ({ ...prev, tokenNo: newToken }));
-
+  
     console.log("formdata==>>>", { ...formData, tokenNo: newToken });
-
+    localStorage.setItem("generatedToken", JSON.stringify(newToken));
     try {
       const response = await fetch("http://localhost:5000/auth/register", {
         method: "POST",
@@ -36,11 +46,12 @@ const Reception = () => {
 
       const result = await response.json();
       console.log("result==>>", result);
-       setResults(result)
+      setResults(result);
+
       if (response.ok) {
         Swal.fire("User registered successfully!");
         console.log("Registered User:", result.name);
-  } else {
+      } else {
         Swal.fire(result.message);
       }
     } catch (error) {
@@ -48,8 +59,6 @@ const Reception = () => {
       Swal.fire("Server error. Please try again later.");
     }
   };
-
-  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -59,7 +68,7 @@ const Reception = () => {
   const handleSelectChange = (e) => {
     setFormData({ ...formData, purpose: e.target.value });
   };
-  
+
   return (
     <div className="max-w-xl mx-auto mt-8 p-4 border rounded-lg shadow-md">
       <h1 className="text-xl font-bold mb-4">Reception Desk</h1>
@@ -129,17 +138,19 @@ const Reception = () => {
         </select>
       </div>
 
-       <button
+      <button
         onClick={handleSubmit}
         className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
       >
         Generate Token
       </button>
+
       {results && (
-         <div className="mt-4 bg-green-100 p-4 rounded text-center">
-         {results.user.tokenNo}
-       </div>
-        )}
+        <div className="mt-4 bg-green-100 p-4 rounded text-center">
+          Token Number: {results.user.tokenNo}
+          token={results.user.tokenNo}
+        </div>
+      )}
     </div>
   );
 };

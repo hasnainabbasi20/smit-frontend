@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Swal from "sweetalert2";
 
@@ -9,6 +8,7 @@ const StaffForm = () => {
   const [remarks, setRemarks] = useState("");
   const [error, setError] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
+  const [results, setResults] = useState("");
 
   const fetchBeneficiaryInfo = async () => {
     if (!token.trim()) {
@@ -27,13 +27,12 @@ const StaffForm = () => {
       });
 
       const result = await response.json();
-      console.log("token add=>>",result)
       if (response.ok) {
         setBeneficiaryInfo(result.userData);
         setError("");
       } else {
         setBeneficiaryInfo(null);
-        setError(result.message || "Failed to fetch beneficiary info");
+        setError(result.message || "Failed to fetch beneficiary info.");
       }
     } catch (error) {
       console.error("Error fetching beneficiary info:", error);
@@ -57,21 +56,19 @@ const StaffForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!remarks.trim()) {
-      Swal.fire("Remarks are required before submitting.")
+      Swal.fire("Remarks are required before submitting.");
       return;
     }
-  
+
     try {
-      // Construct the payload
       const payload = {
-        userId: beneficiaryInfo?._id, // Ensure `beneficiaryInfo` has a `_id` field
+        userId: beneficiaryInfo?._id,
         remarks,
         updateStatus: status,
       };
-  
-      // Make the API call
+
       const response = await fetch("http://localhost:5000/auth/userClear", {
         method: "POST",
         headers: {
@@ -79,39 +76,35 @@ const StaffForm = () => {
         },
         body: JSON.stringify(payload),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         setShowReceipt(true);
-        alert("Assistance details updated successfully!");
+        Swal.fire("Assistance details updated successfully!");
         setToken("");
         setBeneficiaryInfo(null);
         setRemarks("");
         setStatus("In Progress");
       } else {
-        // Handle API errors
-        alert(result.message || "Failed to update assistance details.");
+        Swal.fire(result.message || "Failed to update assistance details.");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("An error occurred. Please try again later.");
+      Swal.fire("An error occurred. Please try again later.");
     }
   };
-  
 
-    console.log({
-      token,
-      status,
-      remarks,
-      beneficiaryInfo,
-    });
-
-    Swal.fire("Assistance details updated successfully!");
-    setToken("");
-    setBeneficiaryInfo(null);
-    setRemarks("");
-    setStatus("In Progress");
+  const seeGeneratedToken = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/someEndpoint", { method: "GET" });
+      const result = await response.json();
+      setResults(result);
+    } catch (error) {
+      console.error("Error fetching token:", error);
+      setResults(null);
+    }
+  };
 
   return (
     <div
@@ -134,29 +127,10 @@ const StaffForm = () => {
           padding: "1.5rem",
         }}
       >
-        <h2
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "600",
-            marginBottom: "1rem",
-            color: "#374151",
-          }}
-        >
-          Department Staff Form
-        </h2>
+        <h2 style={{ fontSize: "1.5rem", fontWeight: "600", color: "#374151" }}>Department Staff Form</h2>
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.875rem",
-                fontWeight: "500",
-                marginBottom: "0.5rem",
-                color: "#6b7280",
-              }}
-            >
-              Scan Token
-            </label>
+            <label style={{ color: "#6b7280", marginBottom: "0.5rem" }}>Scan Token</label>
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <input
                 type="text"
@@ -164,80 +138,28 @@ const StaffForm = () => {
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Enter token"
                 required
-                style={{
-                  flex: "1",
-                  padding: "0.5rem",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "4px",
-                }}
+                style={{ flex: "1", padding: "0.5rem", borderRadius: "4px" }}
               />
-              <button
-                type="button"
-                onClick={fetchBeneficiaryInfo}
-                style={{
-                  padding: "0.5rem 1rem",
-                  backgroundColor: "#3b82f6",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Retrieve Info
-              </button>
+              <button type="button" onClick={fetchBeneficiaryInfo} style={{ padding: "0.5rem 1rem" }}>Retrieve Info</button>
             </div>
-            {error && (
-              <p style={{ color: "red", fontSize: "0.875rem", marginTop: "0.5rem" }}>
-                {error}
-              </p>
-            )}
+            {error && <p style={{ color: "red" }}>{error}</p>}
           </div>
 
           {beneficiaryInfo && (
-            <div
-              style={{
-                padding: "1rem",
-                backgroundColor: "#f3f4f6",
-                border: "1px solid #d1d5db",
-                borderRadius: "4px",
-              }}
-            >
-              <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                <strong>Name:</strong> {beneficiaryInfo.name}
-              </p>
-              <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                <strong>Address:</strong> {beneficiaryInfo.address}
-              </p>
-              <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                <strong>CNIC:</strong> {beneficiaryInfo.cnic}
-              </p>
-              <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                <strong>Assistance Type:</strong> {beneficiaryInfo.purpose}
-              </p>
+            <div>
+              <p><strong>Name:</strong> {beneficiaryInfo.name}</p>
+              <p><strong>Address:</strong> {beneficiaryInfo.address}</p>
+              <p><strong>CNIC:</strong> {beneficiaryInfo.cnic}</p>
+              <p><strong>Assistance Type:</strong> {beneficiaryInfo.assistanceType}</p>
             </div>
           )}
 
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.875rem",
-                fontWeight: "500",
-                marginBottom: "0.5rem",
-                color: "#6b7280",
-              }}
-            >
-              Update Status
-            </label>
+            <label>Update Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                border: "1px solid #d1d5db",
-                borderRadius: "4px",
-              }}
+              style={{ width: "100%", padding: "0.5rem", borderRadius: "4px" }}
             >
               <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
@@ -245,98 +167,45 @@ const StaffForm = () => {
           </div>
 
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.875rem",
-                fontWeight: "500",
-                marginBottom: "0.5rem",
-                color: "#6b7280",
-              }}
-            >
-              Remarks
-            </label>
+            <label>Remarks</label>
             <textarea
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="Enter remarks or actions taken"
               rows={4}
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                border: "1px solid #d1d5db",
-                borderRadius: "4px",
-              }}
+              style={{ width: "100%", padding: "0.5rem" }}
             ></textarea>
           </div>
 
-          <div style={{ textAlign: "right" }}>
-            <button
-              type="submit"
-              style={{
-                padding: "0.5rem 1rem",
-                backgroundColor: "#3b82f6",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Update Assistance
-            </button>
-          </div>
+          <button type="submit" style={{ padding: "0.5rem 1rem" }}>Update Assistance</button>
         </form>
 
         {showReceipt && (
-          <div
-            style={{
-              marginTop: "1rem",
-              padding: "1rem",
-              backgroundColor: "#f9fafb",
-              border: "1px solid #d1d5db",
-              borderRadius: "4px",
-            }}
-          >
-            <h3 style={{ fontSize: "1rem", color: "#374151" }}>Receipt</h3>
-            <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-              <strong>Token Number:</strong> {token}
-            </p>
-            <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-              <strong>Status:</strong> {status}
-            </p>
-            <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-              <strong>Remarks:</strong> {remarks}
-            </p>
+          <div>
+            <h3>Receipt</h3>
+            <p><strong>Token Number:</strong> {token}</p>
+            <p><strong>Status:</strong> {status}</p>
+            <p><strong>Remarks:</strong> {remarks}</p>
+
             {beneficiaryInfo && (
               <div>
-                <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                  <strong>Name:</strong> {beneficiaryInfo.name}
-                </p>
-                <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                  <strong>Address:</strong> {beneficiaryInfo.address}
-                </p>
-                <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                  <strong>CNIC:</strong> {beneficiaryInfo.cnic}
-                </p>
-                <p style={{ fontSize: "0.875rem", color: "#374151" }}>
-                  <strong>Assistance Type:</strong> {beneficiaryInfo.purpose}
-                </p>
+                <p><strong>Name:</strong> {beneficiaryInfo.name}</p>
+                <p><strong>Address:</strong> {beneficiaryInfo.address}</p>
+                <p><strong>CNIC:</strong> {beneficiaryInfo.cnic}</p>
+                <p><strong>Assistance Type:</strong> {beneficiaryInfo.assistanceType}</p>
               </div>
             )}
-            <button
-              onClick={handleDownloadReceipt}
-              style={{
-                marginTop: "1rem",
-                padding: "0.5rem 1rem",
-                backgroundColor: "#10b981",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Download Receipt
-            </button>
+
+            <button onClick={handleDownloadReceipt} style={{ marginTop: "1rem" }}>Download Receipt</button>
+            
+          </div>
+        )}
+
+        {results && (
+         
+          <div>
+             <button onClick={seeGeneratedToken} style={{ marginTop: "1rem" }}>See Generated Token</button>
+            <p>Token Number: {FormData.tokenNo}</p>
           </div>
         )}
       </div>
@@ -345,4 +214,3 @@ const StaffForm = () => {
 };
 
 export default StaffForm;
-
